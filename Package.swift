@@ -4,15 +4,15 @@
 import PackageDescription
 
 let package = Package(
-    name: "sentry-vapor",
+    name: "SentryVapor",
     platforms: [
        .macOS(.v12)
     ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
-            name: "sentry-vapor",
-            targets: ["sentry-vapor"]),
+            name: "SentryVapor",
+            targets: ["SentryVapor"]),
     ],
     dependencies: [
         .package(url: "https://github.com/Blindspot-cloud/sentry-swift.git", from: "0.1.0"),
@@ -22,14 +22,11 @@ let package = Package(
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "sentry-vapor",
+            name: "SentryVapor",
             dependencies: [
                 .product(name: "Vapor", package: "vapor"),
                 .product(name: "SentrySwift", package: "sentry-swift")
             ]
-        ),
-        .testTarget(
-            name: "sentry-vaporTests",
-            dependencies: ["sentry-vapor"]),
+        )
     ]
 )
