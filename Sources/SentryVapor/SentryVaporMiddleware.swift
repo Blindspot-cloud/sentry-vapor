@@ -11,6 +11,7 @@ import SentrySwift
 
 
 /// Sentry middleware for Vapor
+/// It makes every request a transaction and sets Task local hub for the request
 ///
 /// ```
 /// app.middleware.use(SentryVaporMiddleware())
