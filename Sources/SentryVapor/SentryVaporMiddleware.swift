@@ -41,11 +41,24 @@ public struct SentryVaporMiddleware: AsyncMiddleware {
             tr.set_name_source(.route)
             tr.set_request(req)
             
-            let response = try await next.respond(to: request)
-
-            tr.set_status(response.status.intoSpanStatus())
-            tr.finish()
-            return response
+            
+            do {
+                let response = try await next.respond(to: request)
+                tr.set_status(response.status.intoSpanStatus())
+                tr.finish()
+                
+                return response
+            }catch {
+                switch error {
+                case let abort as AbortError:
+                    tr.set_status(abort.status.intoSpanStatus())
+                default:
+                    Sentry.capture_error(error: error)
+                }
+            
+                tr.finish()
+                throw error
+            }
         }
     }
 }
