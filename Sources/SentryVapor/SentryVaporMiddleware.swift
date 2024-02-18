@@ -19,9 +19,17 @@ import SentrySwift
 /// > Warning: Sentry SDK should be initialized else this middleware will do nothing
 ///
 public struct SentryVaporMiddleware: AsyncMiddleware {
-    public init() {}
+    private let filter: (Vapor.Request) -> Bool;
+    
+    public init(filter: (@escaping (Vapor.Request) -> Bool) = { _ in true }) {
+        self.filter = filter
+    }
     
     public func respond(to request: Vapor.Request, chainingTo next: AsyncResponder) async throws -> Response {
+        if self.filter(request) == false {
+            return try await next.respond(to: request)
+        }
+        
         let hub = Hub.new_from_top(other: Hub.current())
         
         return try await Hub.run(with: hub) {
