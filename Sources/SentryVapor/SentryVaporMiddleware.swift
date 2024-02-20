@@ -30,9 +30,12 @@ public struct SentryVaporMiddleware: AsyncMiddleware {
             return try await next.respond(to: request)
         }
         
+        request.logger.info("Createing new HUB: \(request.url.path)")
         let hub = Hub.new_from_top(other: Hub.current())
         
+        request.logger.info("Starting Task with new HUB: \(request.url.path)")
         return try await Hub.run(with: hub) {
+            request.logger.info("Parsing metadata: \(request.url.path)")
             let name = "\(request.method) \(request.url.path)"
             let headers = Dictionary(uniqueKeysWithValues: request.headers.map { $0 })
             let req = SentrySwift.Request(
@@ -42,6 +45,7 @@ public struct SentryVaporMiddleware: AsyncMiddleware {
                 headers: headers
             )
             
+            request.logger.info("Starting Transaction: \(request.url.path)")
             let tr = Sentry.start_transaction(name: name, op: .http_server, headers: headers)
             hub.configure_scope {
                 $0.set_span(span: tr)
@@ -51,12 +55,16 @@ public struct SentryVaporMiddleware: AsyncMiddleware {
             
             
             do {
+                request.logger.info("Running next middleware: \(request.url.path)")
                 let response = try await next.respond(to: request)
                 tr.set_status(response.status.intoSpanStatus())
+                
+                request.logger.info("Finished: \(request.url.path)")
                 tr.finish()
                 
                 return response
             }catch {
+                request.logger.info("Catching error: \(request.url.path)")
                 switch error {
                 case let abort as AbortError:
                     tr.set_status(abort.status.intoSpanStatus())
@@ -65,6 +73,7 @@ public struct SentryVaporMiddleware: AsyncMiddleware {
                 }
             
                 tr.finish()
+                request.logger.info("Throwing error: \(request.url.path)")
                 throw error
             }
         }
